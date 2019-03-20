@@ -1,4 +1,4 @@
-
+#!/usr/bin/env node
 var Discord = require('discord.js');
 var puppeteer = require("puppeteer");
 var {archive_webhook} = require("./credentials");
