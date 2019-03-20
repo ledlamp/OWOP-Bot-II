@@ -1,6 +1,10 @@
-module.exports = async function(archiveChannel) {
-    var Discord = require('discord.js');
-    var puppeteer = require("puppeteer");
+
+var Discord = require('discord.js');
+var puppeteer = require("puppeteer");
+var {archive_webhook} = require("./credentials");
+archive_webhook = new Discord.WebhookClient(archive_webhook.id, archive_webhook.token);
+
+module.exports = async function archive() {
     console.log("Archive started");
     try {
         var browser = await puppeteer.launch();
@@ -18,7 +22,7 @@ module.exports = async function(archiveChannel) {
         let screenshot = await page.screenshot({ type: 'png' });
         let filename = `Screenshot of ourworldofpixels.com/main @ ${new Date().toISOString()}.png`;
         let attachment = new Discord.Attachment(screenshot, filename);
-        await archiveChannel.send(attachment);
+        await archive_webhook.send(attachment);
         console.log("Archive finished");
     } finally {
         await browser.close();

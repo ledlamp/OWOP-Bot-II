@@ -392,7 +392,5 @@ bot.login(Token);
   }, 100);
 }*/
 
-global.archive = function archive() {
-  require('./archive')(archiveChannel);
-}
+var archive = require('./archive');
 setInterval(archive, 1000 * 60 * 60);
