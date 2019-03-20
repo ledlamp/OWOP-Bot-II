@@ -1,0 +1,7 @@
+{
+	"dependencies": {
+		"discord.js": "11.x",
+		"ws": "",
+		"canvas": "1.x"
+	}
+}

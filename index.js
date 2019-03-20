@@ -4,7 +4,9 @@ const Discord = require("discord.js");
 const WebSocket = require("ws");
 const Canvas = require("canvas");
 
-const Token = "";
+const credentials = require("./credentials");
+
+const Token = credentials.discord_token;
 const ServerId = "350296414720491530";
 const adminPass = "";
 
@@ -22,17 +24,26 @@ let chunkStart = [0, 0];
 
 // Connect to owop
 let botId = 0;
-let owopBot = new WebSocket("ws://ourworldofpixels.com:443", {
-  origin: "http://ourworldofpixels.com/"
+let owopBot = new WebSocket("wss://ourworldofpixels.com", {
+  origin: "https://ourworldofpixels.com/"
 });
 owopBot.on("open", function() {
   console.log("owop open!");
 });
+//owopBot.on("message", console.log);
 owopBot.on("message", function(data) {
   if (typeof data == "string") {
-    if (!data.startsWith("[D]") && !data.startsWith("DEV") && !data.startsWith("Nickname") && !data.startsWith("User: ")) {
+    if	(
+			!data.startsWith(`[${botId}]`) &&
+			!data.startsWith(botId) &&
+			!data.startsWith("[D]") &&
+			!data.startsWith("DEV") &&
+			!data.startsWith("Nickname") &&
+			!data.startsWith("User: ") &&
+			!data.startsWith("<")
+	) {
       if (gatewayChannel) {
-        gatewayChannel.send(data);
+        gatewayChannel.send(data, {split:{char:''}});
       }
     }
   } else {
@@ -40,7 +51,7 @@ owopBot.on("message", function(data) {
       case 0: // Get id
         botId = data.readUInt32LE(1);
         console.log("owop ready!");
-        owopBot.send("/adminlogin " + adminPass + String.fromCharCode(10));
+        if (adminPass) owopBot.send("/adminlogin " + adminPass + String.fromCharCode(10));
         sendMove();
         setInterval(sendMove, 600000);
         break;
@@ -95,10 +106,11 @@ owopBot.on("message", function(data) {
       case 5: // Captcha
         switch(data.readUInt8(1)) {
           case 0:
-            owopBot.send("CaptchALETMEINPLS" + adminPass);
+            if (adminPass) owopBot.send("CaptchALETMEINPLS" + adminPass);
             break;
           case 3:
-            owopBot.send(new Buffer([109, 97, 105, 110, 57, 5]));
+            //owopBot.send(new Buffer([109, 97, 105, 110, 57, 5]));
+            joinWorld("main");
             break;
         }
         break;
@@ -108,9 +120,38 @@ owopBot.on("message", function(data) {
 owopBot.on("close", function() {
   console.log("owop close!!!");
 });
+owopBot.on("error", function(error){
+	console.error(error);
+});
 function sendMove() {
   owopBot.send(new Buffer([127, 255, 255, 255,   127, 255, 255, 255,   0, 0, 0, 0]));
 }
+function joinWorld(name) {
+	var nstr = stoi(name, 24/*OldProtocol.maxWorldNameLength*/);
+	//_global.eventSys.emit(_conf.EVENTS.net.world.joining, name);
+	var array = new ArrayBuffer(nstr[0].length + 2);
+	var dv = new DataView(array);
+	for (var i = nstr[0].length; i--;) {
+		dv.setUint8(i, nstr[0][i]);
+	}
+	dv.setUint16(nstr[0].length, 4321/*OldProtocol.misc.worldVerification*/, true);
+	owopBot.send(array);
+	return nstr[1];
+}
+function stoi(string, max) {
+	var ints = [];
+	var fstring = "";
+	string = string.toLowerCase();
+	for (var i = 0; i < string.length && i < max; i++) {
+		var charCode = string.charCodeAt(i);
+		if (charCode < 123 && charCode > 96 || charCode < 58 && charCode > 47 || charCode == 95 || charCode == 46) {
+			fstring += String.fromCharCode(charCode);
+			ints.push(charCode);
+		}
+	}
+	return [ints, fstring];
+}
+
 
 
 let roles = {
@@ -259,14 +300,18 @@ bot.on("message", function(message) {
       }
     } else if (message.channel.id == "398541666442674187") {
       if (owopBot.readyState == WebSocket.OPEN) {
-        owopBot.send("/nick [D] " + message.member.displayName + String.fromCharCode(10));
-        owopBot.send("​" + message.content + String.fromCharCode(10));
+	let nickname = (message.member && message.member.displayName) || message.author.username;
+	nickname = `[D] ${nickname}`;
+	nickname = nickname.substr(0,12);
+        owopBot.send("/nick " + nickname + String.fromCharCode(10));
+        owopBot.send("​" + message.cleanContent + String.fromCharCode(10));
       }
     }
   }
 });
 bot.on("messageDelete", function(message) {
-  bot.channels.find("name", "deleted-messages").send("<@" + message.author.id + ">\n```" + message.content.replace(/`/g, "`​") + "```\nDeleted from <#" + message.channel.id + ">");
+  var deleted_messages = bot.channels.find("name", "deleted-messages");
+  if (deleted_messages) deleted_messages.send("<@" + message.author.id + ">\n```" + message.content.replace(/`/g, "`​") + "```\nDeleted from <#" + message.channel.id + ">");
   //bot.createMessage("398548887314628608", "`" + msg.id + "` Deleted from <#" + msg.channel.id + ">, content wasn't cached!");
 });
 
@@ -300,4 +345,4 @@ function archive() {
     }
   }, 100);
 }
-setInterval(archive, 1000 * 60 * 60);
+//setInterval(archive, 1000 * 60 * 60);
