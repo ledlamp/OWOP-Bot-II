@@ -1,7 +1,8 @@
 {
 	"dependencies": {
+		"canvas": "1.x",
 		"discord.js": "11.x",
-		"ws": "",
-		"canvas": "1.x"
+		"puppeteer": "^1.13.0",
+		"ws": ""
 	}
 }

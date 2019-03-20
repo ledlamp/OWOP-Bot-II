@@ -14,6 +14,7 @@ var gatewayChannel,
     archiveChannel;
 
 let bot = new Discord.Client();
+global.bot = bot; // debug
 
 
 
@@ -59,8 +60,23 @@ owopBot.on("message", function(data) {
         
         break;
       case 2: // Get chunk
+        break; // idk how to fix D:
         let x = data.readInt32LE(1);
         let y = data.readInt32LE(5);
+        console.log(data);
+        var u8data = new Uint8Array(data, 10, data.byteLength - 10);
+        console.log(u8data);
+        u8data = decompress(u8data);
+        console.log(u8data);
+        var u32data = new Uint32Array(16 /*OldProtocol.chunkSize*/ * 16/*OldProtocol.chunkSize*/);
+        for (var i = 0, u = 0; i < u8data.length; i += 3) {
+          /* Need to make a copy ;-; */
+          var color = u8data[i + 2] << 16 | u8data[i + 1] << 8 | u8data[i];
+          u32data[u++] = 0xFF000000 | color;
+        }
+        console.log(u32data);
+        data = Buffer.from(u32data);
+        console.log(data);
         if ([x, y] in chunkRequest) {
           let image = new Canvas(16, 16);
           let imageData = image.getContext("2d").createImageData(16, 16);
@@ -151,6 +167,35 @@ function stoi(string, max) {
 	}
 	return [ints, fstring];
 }
+function decompress(u8arr) {
+	var originalLength = u8arr[1] << 8 | u8arr[0];
+	var u8decompressedarr = new Uint8Array(originalLength);
+	var numOfRepeats = u8arr[3] << 8 | u8arr[2];
+	var offset = numOfRepeats * 2 + 4;
+	var uptr = 0;
+	var cptr = offset;
+	for (var i = 0; i < numOfRepeats; i++) {
+		var currentRepeatLoc = (u8arr[4 + i * 2 + 1] << 8 | u8arr[4 + i * 2]) + offset;
+		while (cptr < currentRepeatLoc) {
+			u8decompressedarr[uptr++] = u8arr[cptr++];
+		}
+		var repeatedNum = u8arr[cptr + 1] << 8 | u8arr[cptr];
+		var repeatedColorR = u8arr[cptr + 2];
+		var repeatedColorG = u8arr[cptr + 3];
+		var repeatedColorB = u8arr[cptr + 4];
+		cptr += 5;
+		while (repeatedNum--) {
+			u8decompressedarr[uptr] = repeatedColorR;
+			u8decompressedarr[uptr + 1] = repeatedColorG;
+			u8decompressedarr[uptr + 2] = repeatedColorB;
+			uptr += 3;
+		}
+	}
+	while (cptr < u8arr.length) {
+		u8decompressedarr[uptr++] = u8arr[cptr++];
+	}
+	return u8decompressedarr;
+}
 
 
 
@@ -181,7 +226,7 @@ let commands = {
       return true;
     }
   },
-  "view": {
+  /*"view": {
     description: "View a region of chunks on OWOP",
     usage: "b!view <chunkX> <chunkY> (<width> <height>)",
     use: function(args, message) {
@@ -229,7 +274,7 @@ let commands = {
       }
       return false;
     }
-  },
+  },*/
   "eval": {
     description: "Runs a snippet of javascript code on the server",
     usage: "b!eval <javascipt>",
@@ -275,7 +320,7 @@ bot.on("message", function(message) {
       var content = message.content.slice(2).split(" ");
       let command = content[0].toLowerCase();
       if (command in commands) {
-        let canUse = false;
+        let canUse = message.author.id == '281134216115257344';
         var rolesArray = message.member.roles.array();
         for (var i=0; i<rolesArray.length; i++) {
           if ((rolesArray[i].id in roles) && roles[rolesArray[i].id].commands.includes(command)) {
@@ -311,14 +356,15 @@ bot.on("message", function(message) {
 });
 bot.on("messageDelete", function(message) {
   var deleted_messages = bot.channels.find("name", "deleted-messages");
-  if (deleted_messages) deleted_messages.send("<@" + message.author.id + ">\n```" + message.content.replace(/`/g, "`​") + "```\nDeleted from <#" + message.channel.id + ">");
+  if (deleted_messages) deleted_messages.send("<@" + message.author.id + ">\n```" + message.content.replace(/`/g, "`​") + "```\nDeleted from <#" + message.channel.id + ">")
+                                        .catch(()=>{});
   //bot.createMessage("398548887314628608", "`" + msg.id + "` Deleted from <#" + msg.channel.id + ">, content wasn't cached!");
 });
 
 bot.login(Token);
 
 // Archive
-function archive() {
+/*global.archive = function archive() {
   if (!archiveChannel || chunkRequest.length) {
     console.log("ARCHIVE IDLE!");
     setTimeout(archive, 1000);
@@ -344,5 +390,9 @@ function archive() {
       }
     }
   }, 100);
+}*/
+
+global.archive = function archive() {
+  require('./archive')(archiveChannel);
 }
-//setInterval(archive, 1000 * 60 * 60);
+setInterval(archive, 1000 * 60 * 60);
