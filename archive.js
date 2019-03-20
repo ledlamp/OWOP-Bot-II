@@ -25,6 +25,6 @@ archive_webhook = new Discord.WebhookClient(archive_webhook.id, archive_webhook.
         await archive_webhook.send(attachment);
         console.log("Archive finished");
     } finally {
-        await browser.close();
+        process.exit();
     }
 })();
