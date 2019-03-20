@@ -391,6 +391,3 @@ bot.login(Token);
     }
   }, 100);
 }*/
-
-var archive = require('./archive');
-setInterval(archive, 1000 * 60 * 60);

@@ -4,10 +4,10 @@ var puppeteer = require("puppeteer");
 var {archive_webhook} = require("./credentials");
 archive_webhook = new Discord.WebhookClient(archive_webhook.id, archive_webhook.token);
 
-module.exports = async function archive() {
+(async function archive() {
     console.log("Archive started");
     try {
-        var browser = await puppeteer.launch();
+        var browser = await puppeteer.launch({args:['--no-sandbox']});
         var page = await browser.newPage();
         await page.setViewport({width:2048, height:2048});
         await page.goto("https://ourworldofpixels.com");
@@ -27,4 +27,4 @@ module.exports = async function archive() {
     } finally {
         await browser.close();
     }
-}
+})();
