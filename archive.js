@@ -15,7 +15,8 @@ var archive_webhook = new Discord.WebhookClient(credentials.archive_webhook.id, 
         console.log("OWOP Loaded");
         await page.evaluate(async function (captcha_password) {
             OWOP.camera.zoom = 1;
-            localStorage.owopOptions = '{"defaultZoom": 1}' //todo "noUi":true
+            OWOP.options.noUi = true;
+            localStorage.owopOptions = '{"defaultZoom": 1, "noUi": true}';
             localStorage.owopcaptcha = captcha_password;
             for (let butt of document.getElementsByTagName('button')) {
                 if (butt.innerText == 'OK') {butt.click();break}
