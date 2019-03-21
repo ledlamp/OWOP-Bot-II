@@ -8,7 +8,6 @@ const credentials = require("./credentials");
 
 const Token = credentials.discord_token;
 const ServerId = "350296414720491530";
-const adminPass = "";
 
 var gatewayChannel,
     archiveChannel;
@@ -52,7 +51,7 @@ owopBot.on("message", function(data) {
       case 0: // Get id
         botId = data.readUInt32LE(1);
         console.log("owop ready!");
-        if (adminPass) owopBot.send("/adminlogin " + adminPass + String.fromCharCode(10));
+        owopBot.send("/pass " + credentials.mod_password + String.fromCharCode(10));
         sendMove();
         setInterval(sendMove, 600000);
         break;
@@ -122,7 +121,7 @@ owopBot.on("message", function(data) {
       case 5: // Captcha
         switch(data.readUInt8(1)) {
           case 0:
-            if (adminPass) owopBot.send("CaptchALETMEINPLS" + adminPass);
+            owopBot.send("CaptchALETMEINPLZ" + credentials.captcha_password);
             break;
           case 3:
             //owopBot.send(new Buffer([109, 97, 105, 110, 57, 5]));
@@ -346,8 +345,8 @@ bot.on("message", function(message) {
     } else if (message.channel.id == "398541666442674187") {
       if (owopBot.readyState == WebSocket.OPEN) {
 	let nickname = (message.member && message.member.displayName) || message.author.username;
-	nickname = `[D] ${nickname}`;
-	nickname = nickname.substr(0,12);
+	//nickname = `[D] ${nickname}`;
+	//nickname = nickname.substr(0,12);
         owopBot.send("/nick " + nickname + String.fromCharCode(10));
         owopBot.send("​" + message.cleanContent + String.fromCharCode(10));
       }
