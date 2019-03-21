@@ -25,6 +25,7 @@ var archive_webhook = new Discord.WebhookClient(credentials.archive_webhook.id, 
                 OWOP.once(OWOP.events.allChunksLoaded, () => {
                     resolve();
                 });
+                setTimeout(resolve, 60000);
             });
         }, credentials.captcha_password);
         console.log("Saving screenshot");
