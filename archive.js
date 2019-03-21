@@ -22,13 +22,11 @@ var archive_webhook = new Discord.WebhookClient(credentials.archive_webhook.id, 
                 if (butt.innerText == 'OK') {butt.click();break}
             }
             await new Promise(resolve => {
-                //OWOP.once(OWOP.events.allChunksLoaded, () => { // todo
+                OWOP.once(OWOP.events.allChunksLoaded, () => {
                     resolve();
-                //});
+                });
             });
         }, credentials.captcha_password);
-        console.log("Waiting a minute...");
-        await new Promise(resolve => setTimeout(resolve, 60000)); //todo reduce if OWOP.events.allChunksLoaded works
         console.log("Saving screenshot");
         let screenshot = await page.screenshot({ type: 'png' });
         let filename = `Screenshot of ourworldofpixels.com/main @ ${new Date().toISOString()}.png`;
