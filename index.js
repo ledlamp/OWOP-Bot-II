@@ -119,7 +119,7 @@ function createOWOPbridge(owopWorld, discordChannelID, password) {
 				nickname = `[D] ${authorname}`;
 				if (nickname.length > 16) nickname = nickname.substr(0,15) + '…';
 			} else {
-				prefix = `[D] ${authorname} `;
+				prefix = `[D] ${authorname}: `;
 			}
 			if (nickname) owopSocket.send("/nick " + nickname + String.fromCharCode(10));
 			var message = prefix + message.cleanContent;
