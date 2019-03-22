@@ -46,6 +46,7 @@ function createOWOPbridge(owopWorld, discordChannelID) {
 			if (data.startsWith("User: ")) return;
 			if (data.startsWith("<")) return; // ignore HTML greeting
 			if (data == "Server: You are now a moderator. Do /help for a list of commands.") return; // ignore that
+			if (data.startsWith("[Server]")) return; // ignore [Server] messages
 			
 			discordChannel.send(data, { split: { char: '' } });
 
