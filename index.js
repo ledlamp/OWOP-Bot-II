@@ -3,24 +3,24 @@
 const Discord = require("discord.js");
 const WebSocket = require("ws");
 
-const credentials = require("./credentials");
+const config = require("./config");
 
 var discordBot = new Discord.Client();
-discordBot.login(credentials.discord_token);
+discordBot.login(config.discord_token);
 
 
-var bridgemap = require('./bridges'); // owop world names to discord channel IDs
+var bridgemap = config.bridges; // owop channel to bridge info (discord channel id, password)
 var bridges = {}; // owop websockets to discord channels
 discordBot.once("ready", function(){
 	for (let owopWorld in bridgemap) {
-		let discordChannelID = bridgemap[owopWorld];
-		var b = createOWOPbridge(owopWorld, discordChannelID);
+		let {discordChannelID, password} = bridgemap[owopWorld];
+		var b = createOWOPbridge(owopWorld, discordChannelID, password);
 		if (b) bridges[b.owopSocket] = b.discordChannel;
 	}
 });
 
 
-function createOWOPbridge(owopWorld, discordChannelID) {
+function createOWOPbridge(owopWorld, discordChannelID, password) {
 
 	var discordChannel = discordBot.channels.get(discordChannelID);
 	if (!discordChannel) return console.error("Could not find Discord channel with ID", discordChannelID);
@@ -55,14 +55,14 @@ function createOWOPbridge(owopWorld, discordChannelID) {
 				case 0: // Get id
 					botId = data.readUInt32LE(1);
 					console.log("owop", owopWorld, "ready");
-					if (owopWorld == "main") owopSocket.send("/pass " + credentials.mod_password + String.fromCharCode(10));
+					if (password) owopSocket.send("/pass " + password + String.fromCharCode(10));
 					sendMove();
 					setInterval(sendMove, 600000);
 					break;
 				case 5: // Captcha
 					switch (data.readUInt8(1)) {
 						case 0:
-							owopSocket.send("CaptchALETMEINPLZ" + credentials.captcha_password);
+							owopSocket.send("CaptchALETMEINPLZ" + config.captcha_password);
 							break;
 						case 3:
 							joinWorld(owopWorld);
@@ -113,13 +113,18 @@ function createOWOPbridge(owopWorld, discordChannelID) {
 		if (message.channel.id != discordChannelID) return;
 		if (message.author.id == discordBot.user.id) return;
 		if (owopSocket.readyState == WebSocket.OPEN) {
-			let nickname = (message.member && message.member.displayName) || message.author.username;
-			if (owopWorld != "main") {
-				nickname = `[D] ${nickname}`;
+			var authorname = (message.member && message.member.displayName) || message.author.username;
+			var nickname, prefix = "";
+			if (password) {
+				nickname = `[D] ${authorname}`;
 				if (nickname.length > 16) nickname = nickname.substr(0,15) + '…';
+			} else {
+				prefix = `[D] ${authorname} `;
 			}
-			owopSocket.send("/nick " + nickname + String.fromCharCode(10));
-			owopSocket.send("​" + message.cleanContent + String.fromCharCode(10));
+			if (nickname) owopSocket.send("/nick " + nickname + String.fromCharCode(10));
+			var message = prefix + message.cleanContent;
+			if (message.length > 128) message = message.substr(0,127) + '…';
+			owopSocket.send(message + String.fromCharCode(10));
 		}
 	});
 

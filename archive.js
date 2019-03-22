@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 var Discord = require('discord.js');
 var puppeteer = require("puppeteer");
-var credentials = require("./credentials");
-var archive_webhook = new Discord.WebhookClient(credentials.archive_webhook.id, credentials.archive_webhook.token);
+var config = require("./config");
+var archive_webhook = new Discord.WebhookClient(config.archive_webhook.id, config.archive_webhook.token);
 
 (async function archive() {
     console.log("Archive started");
@@ -27,7 +27,7 @@ var archive_webhook = new Discord.WebhookClient(credentials.archive_webhook.id, 
                 });
                 setTimeout(resolve, 60000);
             });
-        }, credentials.captcha_password);
+        }, config.captcha_password);
         console.log("Saving screenshot");
         let screenshot = await page.screenshot({ type: 'png' });
         let filename = `Screenshot of ourworldofpixels.com/main @ ${new Date().toISOString()}.png`;
