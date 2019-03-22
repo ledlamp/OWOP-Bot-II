@@ -116,8 +116,12 @@ function createOWOPbridge(owopWorld, discordChannelID, password) {
 			var authorname = (message.member && message.member.displayName) || message.author.username;
 			var nickname, prefix = "";
 			if (password) {
-				nickname = `[D] ${authorname}`;
-				if (nickname.length > 16) nickname = nickname.substr(0,15) + '…';
+				if (owopWorld == "main") {
+					nickname = authorname;
+				} else {
+					nickname = `[D] ${authorname}`;
+				}
+				if (owopWorld != "main") if (nickname.length > 16) nickname = nickname.substr(0,15) + '…';
 			} else {
 				prefix = `[D] ${authorname}: `;
 			}
