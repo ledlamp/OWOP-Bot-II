@@ -148,3 +148,4 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 
 }
 
+require("./commands")(discordBot);
