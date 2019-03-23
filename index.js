@@ -13,17 +13,17 @@ var bridgemap = config.bridges; // owop channel to bridge info (discord channel 
 var bridges = {}; // owop websockets to discord channels
 discordBot.once("ready", function(){
 	for (let owopWorld in bridgemap) {
-		let {discordChannelID, password} = bridgemap[owopWorld];
-		var b = createOWOPbridge(owopWorld, discordChannelID, password);
-		if (b) bridges[b.owopSocket] = b.discordChannel;
+		let {discordChannelIDs, password} = bridgemap[owopWorld];
+		var b = createOWOPbridge(owopWorld, discordChannelIDs, password);
+		if (b) bridges[b.owopSocket] = b.discordChannels;
 	}
 });
 
 
-function createOWOPbridge(owopWorld, discordChannelID, password) {
+function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 
-	var discordChannel = discordBot.channels.get(discordChannelID);
-	if (!discordChannel) return console.error("Could not find Discord channel with ID", discordChannelID);
+	var discordChannels = discordChannelIDs.map(discordChannelID => discordBot.channels.get(discordChannelID));
+	if (!discordChannels.length) return console.error("Could not find any of the discord channels:", discordChannelIDs);
 
 	var botId = 0;
 	var owopSocket = new WebSocket("wss://ourworldofpixels.com", {
@@ -48,7 +48,7 @@ function createOWOPbridge(owopWorld, discordChannelID, password) {
 			if (data == "Server: You are now a moderator. Do /help for a list of commands.") return; // ignore that
 			if (data.startsWith("[Server]")) return; // ignore [Server] messages
 			
-			discordChannel.send(data, { split: { char: '' } });
+			for (let discordChannel of discordChannels) discordChannel.send(data, { split: { char: '' } });
 
 		} else {
 			switch (data.readUInt8(0)) {
@@ -110,11 +110,11 @@ function createOWOPbridge(owopWorld, discordChannelID, password) {
 
 
 	discordBot.on("message", function (message) {
-		if (message.channel.id != discordChannelID) return;
+		if (!discordChannelIDs.includes(message.channel.id)) return;
 		if (message.author.id == discordBot.user.id) return;
 		if (owopSocket.readyState == WebSocket.OPEN) {
-			var authorname = (message.member && message.member.displayName) || message.author.username;
-			var nickname, prefix = "";
+			let authorname = (message.member && message.member.displayName) || message.author.username;
+			let nickname, prefix = "";
 			if (password) {
 				if (owopWorld == "main") {
 					nickname = authorname;
@@ -126,15 +126,25 @@ function createOWOPbridge(owopWorld, discordChannelID, password) {
 				prefix = `[D] ${authorname}: `;
 			}
 			if (nickname) owopSocket.send("/nick " + nickname + String.fromCharCode(10));
-			var message = prefix + message.cleanContent;
-			if (message.length > 128) message = message.substr(0,127) + '…';
-			owopSocket.send(message + String.fromCharCode(10));
+			let msg = prefix + message.cleanContent;
+			if (msg.length > 128) msg = msg.substr(0,127) + '…';
+			owopSocket.send(msg + String.fromCharCode(10));
 		}
+		discordChannels.forEach(discordChannel => {
+			if (discordChannel.id == message.channel.id) return;
+			discordChannel.send(
+				new Discord.RichEmbed()
+				.setAuthor(message.member && message.member.displayName || message.author.username, message.author.avatarURL)
+				.setColor(message.member && message.member.displayColor)
+				.setDescription(message.content)
+				.setFooter(`from ${message.guild.name}`, message.guild.iconURL)
+			);
+		});
 	});
 
 
-	console.log("bridged owop world", owopWorld, "with discord channel", discordChannelID, `(#${discordChannel.name})`, "in guild", discordChannel.guild.name);
-	return {owopSocket, discordChannel}
+	console.log("bridged owop world", owopWorld, "to discord channels", discordChannels.map(d => [d.id, d.name, d.guild.name]));
+	return {owopSocket, discordChannels}
 
 }
 
