@@ -47,8 +47,10 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 			if (data.startsWith("<")) return; // ignore HTML greeting
 			if (data == "Server: You are now a moderator. Do /help for a list of commands.") return; // ignore that
 			if (data.startsWith("[Server]")) return; // ignore [Server] messages
+			if (data.startsWith("->")) return; // ignore direct messages because spam
 			
-			for (let discordChannel of discordChannels) discordChannel.send(data, { split: { char: '' } });
+			let msg = data.replace(/<@/g, "<\\@"); // filter mentions
+			for (let discordChannel of discordChannels) discordChannel.send(msg, { split: { char: '' } });
 
 		} else {
 			switch (data.readUInt8(0)) {
@@ -112,24 +114,10 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 	discordBot.on("message", function (message) {
 		if (!discordChannelIDs.includes(message.channel.id)) return;
 		if (message.author.id == discordBot.user.id) return;
-		if (owopSocket.readyState == WebSocket.OPEN) {
-			let authorname = (message.member && message.member.displayName) || message.author.username;
-			let nickname, prefix = "";
-			if (password) {
-				if (owopWorld == "main") {
-					nickname = authorname;
-				} else {
-					nickname = `[D] ${authorname}`;
-				}
-				if (owopWorld != "main") if (nickname.length > 16) nickname = nickname.substr(0,15) + '…';
-			} else {
-				prefix = `[D] ${authorname}: `;
-			}
-			if (nickname) owopSocket.send("/nick " + nickname + String.fromCharCode(10));
-			let msg = prefix + message.cleanContent;
-			if (msg.length > 128) msg = msg.substr(0,127) + '…';
-			owopSocket.send(msg + String.fromCharCode(10));
-		}
+
+		if (message.content.startsWith("/")) return message.react("🚫"); // disallow users running commands as the bot
+		// >> todo ignore banned users
+
 		discordChannels.forEach(discordChannel => {
 			if (discordChannel.id == message.channel.id) return;
 			discordChannel.send(
@@ -140,6 +128,25 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 				.setFooter(`from ${message.guild.name}`, message.guild.iconURL)
 			);
 		});
+
+		if (owopSocket.readyState != WebSocket.OPEN) return;
+		let authorname = (message.member && message.member.displayName) || message.author.username;
+		let nickname, prefix = "";
+		if (password) {
+			if (owopWorld == "main") {
+				nickname = authorname;
+			} else {
+				nickname = `[D] ${authorname}`;
+			}
+			if (owopWorld != "main") if (nickname.length > 16) nickname = nickname.substr(0,15) + '…';
+		} else {
+			prefix = `[D] ${authorname}: `;
+		}
+		if (nickname) owopSocket.send("/nick " + nickname + String.fromCharCode(10));
+		let msg = prefix + message.cleanContent;
+		if (msg.length > 128) msg = msg.substr(0,127) + '…';
+		owopSocket.send(msg + String.fromCharCode(10));
+		
 	});
 
 
