@@ -7,7 +7,7 @@ const config = require("./config");
 
 var discordBot = new Discord.Client();
 discordBot.login(config.discord_token);
-
+var banlist;
 
 var bridgemap = config.bridges; // owop channel to bridge info (discord channel id, password)
 var bridges = {}; // owop websockets to discord channels
@@ -17,8 +17,8 @@ discordBot.once("ready", function(){
 		var b = createOWOPbridge(owopWorld, discordChannelIDs, password);
 		if (b) bridges[b.owopSocket] = b.discordChannels;
 	}
+	banlist = require("./banlist")(discordBot);
 });
-
 
 function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 
@@ -116,7 +116,7 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 		if (message.author.id == discordBot.user.id) return;
 
 		if (message.content.startsWith("/")) return message.react("🚫"); // disallow users running commands as the bot
-		// >> todo ignore banned users
+		if (banlist().includes(message.author.id)) return message.react("🚫"); // ignore users banned from owop discord
 
 		discordChannels.forEach(discordChannel => {
 			if (discordChannel.id == message.channel.id) return;
