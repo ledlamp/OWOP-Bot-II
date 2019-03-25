@@ -50,7 +50,9 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 			if (data.startsWith("->")) return; // ignore direct messages because spam
 			
 			let msg = data.replace(/<@/g, "<\\@"); // filter mentions
-			for (let discordChannel of discordChannels) discordChannel.send(msg, { split: { char: '' } });
+			for (let discordChannel of discordChannels)
+				discordChannel.send(msg, { split: { char: '' } })
+					.catch(error => console.error(`Failed to send OWOP message to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));
 
 		} else {
 			switch (data.readUInt8(0)) {
@@ -126,7 +128,7 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 				.setColor(message.member && message.member.displayColor)
 				.setDescription(message.content)
 				.setFooter(`from ${message.guild.name}`, message.guild.iconURL)
-			);
+			).catch(error => console.error(`Failed to send Discord broadcast embed to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));;
 		});
 
 		if (owopSocket.readyState != WebSocket.OPEN) return;
