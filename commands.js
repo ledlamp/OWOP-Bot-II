@@ -73,7 +73,7 @@ module.exports = function (discordBot) {
                             break;
                         }
                     }
-                    if (canUse) {
+                    if (canUse) {   
                         let result = commands[command].use(content.slice(1), message);
                         if (!result) {
                             message.channel.send("**:x:  " + command + " usage:** `" + commands[command].usage + "`");
