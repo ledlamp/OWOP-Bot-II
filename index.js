@@ -5,7 +5,7 @@ const WebSocket = require("ws");
 
 const config = require("./config");
 
-var discordBot = new Discord.Client();
+var discordBot = new Discord.Client({disableEveryone:true});
 discordBot.login(config.discord_token);
 var banlist;
 
