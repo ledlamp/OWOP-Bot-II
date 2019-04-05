@@ -50,6 +50,7 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 			if (data.startsWith("->")) return; // ignore direct messages because spam
 			
 			let msg = data.replace(/<@/g, "<\\@"); // filter mentions
+			if (owopWorld == "main") msg = require('./antiswear')(msg);
 			for (let discordChannel of discordChannels)
 				discordChannel.send(msg, { split: { char: '' } })
 					.catch(error => console.error(`Failed to send OWOP message to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));
