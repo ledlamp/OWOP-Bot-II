@@ -51,9 +51,20 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 			
 			let msg = data.replace(/<@/g, "<\\@"); // filter mentions
 			if (owopWorld == "main") msg = require('./antiswear')(msg);
-			for (let discordChannel of discordChannels)
-				discordChannel.send(msg, { split: { char: '' } })
-					.catch(error => console.error(`Failed to send OWOP message to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));
+			for (let discordChannel of discordChannels) {
+				let lastMessage = discordChannel.messages.last();
+				if (lastMessage && (lastMessage.realmsg ? lastMessage.realmsg == msg : lastMessage.content == msg) && lastMessage.author.id == discordBot.user.id) {
+					// if new message is same as last message (the actual owop message or message content) and bot sent that message
+					// increment number of repetitions and edit last message with the number of repetitions
+					lastMessage.repetitions = ++lastMessage.repetitions || 0;
+					let postfix = ` [x${lastMessage.repetitions}]`;
+					lastMessage.edit(lastMessage.content.substr(0, 2000-postfix.length) + postfix).catch(error => console.error(`Could not edit message ${lastMessage.id}`, error.message));
+					lastMessage.realmsg = msg; // attach actual message to Message object because now the message content has been edited
+				} else {
+					// send new message
+					discordChannel.send(msg, { split: { char: '' } }).catch(error => console.error(`Failed to send OWOP message to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));
+				}
+			}
 
 		} else {
 			switch (data.readUInt8(0)) {
