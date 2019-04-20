@@ -56,10 +56,42 @@ module.exports = function (discordBot) {
                     return true;
                 }
             }.bind(this)
+        },
+        "scale": {
+            description: "Scale an image using nearest-neighbor.",
+            usage: "b!scale (<url> | [image attachment]) (<scale>)",
+            use: async function(args, message) {
+                var request = require("request-promise-native"), sharp = require("sharp");
+                var imageURL = (message.attachments.first() && message.attachments.first().url) || args[0];
+                var scaleFactor = (message.attachments.first() ? args[0] : args[1]) || 2;
+                if (scaleFactor > 10) return message.channel.send("Scale factor too large!");
+                try {
+                    var image = await request.get(imageURL, {encoding: null});
+                } catch(e) {
+                    console.error(e);
+                    message.channel.send("Request: " + e.message);
+                    return false;
+                }
+                try {
+                    var s = sharp(image);
+                    var {width, height} = await s.metadata();
+                    s.resize(Math.round(width * scaleFactor), Math.round(height * scaleFactor), {kernel: "nearest"});
+                    var rsz_image = await s.toBuffer();
+                } catch(e) {
+                    console.error(e);
+                    message.channel.send("Sharp: " + e.message);
+                    return false;
+                }
+                message.channel.send({files:[{
+                    attachment: rsz_image,
+                    name: `rsz_${scaleFactor}_${(message.attachments.first() && message.attachments.first().filename) || imageURL.split("/").pop()}`
+                }]});
+                return true;
+            }
         }
     };
 
-    discordBot.on("message", function (message) {
+    discordBot.on("message", async function (message) {
         if (!message.author.bot) {
             if (message.content.startsWith("b!")) {
                 var content = message.content.slice(2).split(" ");
@@ -74,7 +106,13 @@ module.exports = function (discordBot) {
                         }
                     }
                     if (canUse) {   
-                        let result = commands[command].use(content.slice(1), message);
+                        try {
+                            var result = commands[command].use(content.slice(1), message);
+                            if (result.then) result = await result;
+                        } catch(e) {
+                            message.channel.send("error");
+                            console.error(e);
+                        }
                         if (!result) {
                             message.channel.send("**:x:  " + command + " usage:** `" + commands[command].usage + "`");
                         }

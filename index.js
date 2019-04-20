@@ -172,4 +172,4 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 }
 
 require("./commands")(discordBot);
-require("./pixelart2reddit&facebook")(discordBot);
+if (config.reddit) require("./pixelart2reddit&facebook")(discordBot);
