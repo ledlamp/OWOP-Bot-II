@@ -5,7 +5,7 @@ module.exports = function (discordBot) {
             commands: ["help", "view", "eval"]
         },
         "350296414720491530": { // @everyone
-            commands: ["help", "view"]
+            commands: ["help", "view", "scale"]
         }
     };
 
