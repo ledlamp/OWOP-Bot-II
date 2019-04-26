@@ -90,9 +90,9 @@ module.exports = function (discordBot) {
                 let command = content[0].toLowerCase();
                 if (command in commands) {
                     let canUse = true;
-                    if (command.whitelist) {
+                    if (commands[command].whitelist) {
                         canUse = false;
-                        for (let id of command.whitelist) {
+                        for (let id of commands[command].whitelist) {
                             if (message.author.id == id || (message.member && message.member.roles.keyArray().includes(id))) {
                                 canUse = true;
                                 break;
