@@ -1,14 +1,5 @@
 module.exports = function (discordBot) {
 
-    let roles = {
-        "350303014944505866": { // Admin
-            commands: ["help", "view", "eval"]
-        },
-        "350296414720491530": { // @everyone
-            commands: ["help", "view", "scale"]
-        }
-    };
-
     let commands = {
         "help": {
             description: "Guess what it does",
@@ -28,6 +19,7 @@ module.exports = function (discordBot) {
             }
         },
         "eval": {
+            whitelist: ["350303014944505866", "281134216115257344"], // admins, lamp
             description: "Runs a snippet of javascript code on the server",
             usage: "b!eval <javascipt>",
             use: function (args, message) {
@@ -97,12 +89,14 @@ module.exports = function (discordBot) {
                 var content = message.content.slice(2).split(" ");
                 let command = content[0].toLowerCase();
                 if (command in commands) {
-                    let canUse = message.author.id == '281134216115257344';
-                    var rolesArray = message.member.roles.array();
-                    for (var i = 0; i < rolesArray.length; i++) {
-                        if ((rolesArray[i].id in roles) && roles[rolesArray[i].id].commands.includes(command)) {
-                            canUse = true;
-                            break;
+                    let canUse = true;
+                    if (command.whitelist) {
+                        canUse = false;
+                        for (let id of command.whitelist) {
+                            if (message.author.id == id || (message.member && message.member.roles.keyArray().includes(id))) {
+                                canUse = true;
+                                break;
+                            }
                         }
                     }
                     if (canUse) {   
