@@ -140,6 +140,7 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 				.setColor(message.member && message.member.displayColor)
 				.setDescription(message.content)
 				.setFooter(`from ${message.guild.name}`, message.guild.iconURL)
+				.setImage(message.attachments.first() && message.attachments.first().width && message.attachments.first().url)
 			).catch(error => console.error(`Failed to send Discord broadcast embed to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));;
 		});
 
@@ -158,6 +159,7 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 		}
 		if (nickname) owopSocket.send("/nick " + nickname + String.fromCharCode(10));
 		let msg = prefix + message.cleanContent;
+		if (message.attachments.size > 0) msg += ' ' + message.attachments.map(a => a.url).join(' ');
 		if (msg.length > 128) msg = msg.substr(0,127) + '…';
 		owopSocket.send(msg + String.fromCharCode(10));
 	});
