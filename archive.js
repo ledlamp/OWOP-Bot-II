@@ -8,6 +8,9 @@ var archive_webhook = new Discord.WebhookClient(config.archive_webhook.id, confi
     console.log("Archive started");
     var browser = await puppeteer.launch({args:['--no-sandbox']});
     var page = await browser.newPage();
+    page.on("console", function(){
+        console.log.apply(console, Array.from(arguments).unshift("[Web Console]"));
+    });
     await page.setViewport({width:2048, height:2048});
     console.log("Page opened");
     await page.goto("https://ourworldofpixels.com");
