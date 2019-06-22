@@ -129,8 +129,7 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 		if (!discordChannelIDs.includes(message.channel.id)) return;
 		if (message.author.id == discordBot.user.id) return;
 
-		if (message.content.startsWith("/")) return message.react("🚫"); // disallow users running commands as the bot
-		if (banlist().includes(message.author.id)) return message.react("🚫"); // ignore users banned from owop discord
+		if (banlist().includes(message.author.id)) return message.react("🚫"); // block users banned from owop discord
 
 		discordChannels.forEach(discordChannel => {
 			if (discordChannel.id == message.channel.id) return;
@@ -159,6 +158,7 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 		}
 		if (nickname) owopSocket.send("/nick " + nickname + String.fromCharCode(10));
 		let msg = prefix + message.cleanContent;
+		if (msg.startsWith('/')) msg = ' ' + msg;
 		if (message.attachments.size > 0) msg += ' ' + message.attachments.map(a => a.url).join(' ');
 		if (msg.length > 128) msg = msg.substr(0,127) + '…';
 		owopSocket.send(msg + String.fromCharCode(10));
