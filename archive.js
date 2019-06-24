@@ -8,10 +8,8 @@ var archive_webhook = new Discord.WebhookClient(config.archive_webhook.id, confi
     console.log("Archive started @", Date());
     var browser = await puppeteer.launch({args:['--no-sandbox']});
     var page = await browser.newPage();
-    page.on("console", function(){
-        let args = Array.from(arguments);
-        args.unshift("[Web Console]");
-        console.log.apply(console, args);
+    page.on("console", function(consoleMsg){
+        console.log("[Web Console]", consoleMsg.text());
     });
     await page.setViewport({width:2048, height:2048});
     console.log("Page opened");
