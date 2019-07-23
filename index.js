@@ -111,7 +111,7 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 		for (var i = nstr[0].length; i--;) {
 			dv.setUint8(i, nstr[0][i]);
 		}
-		dv.setUint16(nstr[0].length, 4321/*OldProtocol.misc.worldVerification*/, true);
+		dv.setUint16(nstr[0].length, 25565/*OldProtocol.misc.worldVerification*/, true);
 		if (owopSocket.readyState == WebSocket.OPEN) owopSocket.send(array);
 		return nstr[1];
 	}
