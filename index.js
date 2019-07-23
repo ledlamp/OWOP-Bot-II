@@ -10,21 +10,25 @@ discordBot.login(config.discord_token);
 discordBot.on("error", console.error);
 var banlist;
 
-var bridgemap = config.bridges; // owop channel to bridge info (discord channel id, password)
 var bridges = {}; // owop websockets to discord channels
 discordBot.once("ready", function(){
-	for (let owopWorld in bridgemap) {
-		let {discordChannelIDs, password} = bridgemap[owopWorld];
-		var b = createOWOPbridge(owopWorld, discordChannelIDs, password);
+	for (let owopWorld in config.bridges) {
+		let {discordChannels, password} = config.bridges[owopWorld];
+		var b = createOWOPbridge(owopWorld, discordChannels, password);
 		if (b) bridges[b.owopSocket] = b.discordChannels;
 	}
 	banlist = require("./banlist")(discordBot);
 });
 
 
-function createOWOPbridge(owopWorld, discordChannelIDs, password) {
-	var discordChannels = discordChannelIDs.map(discordChannelID => discordBot.channels.get(discordChannelID)).filter(x => x);
-	if (!discordChannels.length) return console.error("Could not find any of the discord channels:", discordChannelIDs);
+function createOWOPbridge(owopWorld, configDiscordChannels, password) {
+	var discordChannels = configDiscordChannels.map(configDiscordChannel => {
+		var c = discordBot.channels.get(configDiscordChannel.id);
+		// attach webhook to channel object for webhook inter-discord-channel broadcast method
+		if (configDiscordChannel.webhook) c.webhook = new Discord.WebhookClient(configDiscordChannel.webhook.id, configDiscordChannel.webhook.token, {disableEveryone: true});
+		return c;
+	}).filter(x => x);
+	if (!configDiscordChannels.length) return console.error("Could not find any of the discord channels:", configDiscordChannels.map(x => x.id));
 	var botId = 0, owopSocket;
 	(function connect() {
 		owopSocket = new WebSocket("wss://ourworldofpixels.com", {
@@ -129,18 +133,34 @@ function createOWOPbridge(owopWorld, discordChannelIDs, password) {
 		if (!discordChannelIDs.includes(message.channel.id)) return;
 		if (message.author.id == discordBot.user.id) return;
 
-		if (banlist().includes(message.author.id)) return message.react("🚫"); // block users banned from owop discord
+		if (banlist().includes(message.author.id)) return message.react("🚫"); // block users banned from owop discord //TODO only main world
 
+		// broadcast message to other discord channels bridged to the same owop world
 		discordChannels.forEach(discordChannel => {
 			if (discordChannel.id == message.channel.id) return;
-			discordChannel.send(
-				new Discord.RichEmbed()
-				.setAuthor(message.member && message.member.displayName || message.author.username, message.author.avatarURL)
-				.setColor(message.member && message.member.displayColor)
-				.setDescription(message.content)
-				.setFooter(`from ${message.guild.name}`, message.guild.iconURL)
-				.setImage(message.attachments.first() && message.attachments.first().width && message.attachments.first().url)
-			).catch(error => console.error(`Failed to send Discord broadcast embed to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));;
+			if (discordChannel.webhook) {
+				// send using webhook if available, to save visual space
+				let username = message.member && message.member.displayName || message.author.username;
+				username =+ 'ⅼ';
+				if (username.length > 32) username = username.substring(0, 31) + '…';
+				discordChannel.webhook.send(message.content, {username, avatarURL: message.author.avatarURL})
+					.catch(error => {
+						console.error(`Failed to send Discord broadcast via webhook to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message);
+						// fallback to embed if webhook fails
+						regularBroadcast();
+					});
+			} else regularBroadcast();
+			// send as embed
+			function regularBroadcast() {
+				discordChannel.send(
+					new Discord.RichEmbed()
+					.setAuthor(message.member && message.member.displayName || message.author.username, message.author.avatarURL)
+					.setColor(message.member && message.member.displayColor)
+					.setDescription(message.content)
+					.setFooter(`from ${message.guild.name}`, message.guild.iconURL)
+					.setImage(message.attachments.first() && message.attachments.first().width && message.attachments.first().url)
+				).catch(error => console.error(`Failed to send Discord broadcast embed to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));
+			}
 		});
 
 		if (owopSocket.readyState != WebSocket.OPEN) return;
