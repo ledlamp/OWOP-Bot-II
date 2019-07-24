@@ -130,8 +130,9 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 	}
 
 	discordBot.on("message", function (message) {
-		if (!discordChannelIDs.includes(message.channel.id)) return;
-		if (message.author.id == discordBot.user.id) return;
+		if (!configDiscordChannels.map(x => x.id).includes(message.channel.id)) return; // only listen to the bridged channels
+		if (message.author.id == discordBot.user.id) return; // ignore self of course
+		if (discordChannels.filter(x => x.webhook).map(x => x.webhook.id).includes(message.author.id)) return; // ignore any of our webhooks
 
 		if (banlist().includes(message.author.id)) return message.react("🚫"); // block users banned from owop discord //TODO only main world
 
@@ -141,7 +142,7 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 			if (discordChannel.webhook) {
 				// send using webhook if available, to save visual space
 				let username = message.member && message.member.displayName || message.author.username;
-				username =+ 'ⅼ';
+				if (message.guild) username += 'ⅼ' + message.guild.name;
 				if (username.length > 32) username = username.substring(0, 31) + '…';
 				discordChannel.webhook.send(message.content, {username, avatarURL: message.author.avatarURL})
 					.catch(error => {
