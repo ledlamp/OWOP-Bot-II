@@ -142,7 +142,7 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 			if (discordChannel.webhook) {
 				// send using webhook if available, to save visual space
 				let username = message.member && message.member.displayName || message.author.username;
-				if (message.guild) username += 'ⅼ' + message.guild.name;
+				if (message.guild) username += ' @ ' + message.guild.name;
 				if (username.length > 32) username = username.substring(0, 31) + '…';
 				discordChannel.webhook.send(message.content, {username, avatarURL: message.author.avatarURL})
 					.catch(error => {
