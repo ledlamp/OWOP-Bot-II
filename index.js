@@ -39,6 +39,7 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 		});
 		owopSocket.on("message", function (data) {
 			if (typeof data == "string") {
+				// owop to discord
 				console.log(`[${owopWorld}]`, data);
 				if (data.startsWith(botId) || data.startsWith(`[${botId}]`)) return; // ignore self if regular user
 				if (data.startsWith("[D]")) return; // ignore self if special discord user
@@ -49,7 +50,12 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 				if (data == "Server: You are now a moderator. Do /help for a list of commands.") return; // ignore that
 				if (data.startsWith("[Server]")) return; // ignore [Server] messages
 				if (data.startsWith("->")) return; // ignore direct messages because spam
-				let msg = data.replace(/<@/g, "<\\@"); // filter mentions
+				let msg = data;
+				//if (msg.startsWith("(A)")) msg = msg.replace("(A)", "**(A)**");
+				//if (msg.startsWith("(M)")) msg = msg.replace("(M)", "**(M)**");
+				//{ let x = msg.split(':'); x[0] = `**${x[0]}**`; msg = x.join(':'); } // bold prefix to distinguish from newline fakes
+				if (msg.includes(':')) msg = '**' + msg.replace(':', ':**'); // simpler version of above, to include the colon in bold
+				msg = msg.replace(/<@/g, "<\\@"); // filter mentions
 				if (owopWorld == "main") msg = require('./antiswear')(msg);
 				for (let discordChannel of discordChannels) {
 					let lastMessage = discordChannel.messages.last();
@@ -163,7 +169,8 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 				).catch(error => console.error(`Failed to send Discord broadcast embed to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message));
 			}
 		});
-
+		
+		// discord to owop
 		if (owopSocket.readyState != WebSocket.OPEN) return;
 		let authorname = (message.member && message.member.displayName) || message.author.username;
 		let nickname, prefix = "";
