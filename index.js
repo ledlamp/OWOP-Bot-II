@@ -150,12 +150,16 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 				let username = message.member && message.member.displayName || message.author.username;
 				if (message.guild) username += ' @ ' + message.guild.name;
 				if (username.length > 32) username = username.substring(0, 31) + '…';
-				discordChannel.webhook.send(message.cleanContent, {username, avatarURL: message.author.avatarURL, embeds: message.embeds, files: message.attachments})
-					.catch(error => {
-						console.error(`Failed to send Discord broadcast via webhook to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message);
-						// fallback to embed if webhook fails
-						regularBroadcast();
-					});
+				discordChannel.webhook.send(message.cleanContent, {
+					username,
+					avatarURL: message.author.avatarURL,
+					embeds: message.embeds,
+					files: message.attachments.map(x => new Discord.Attachment(x.url, x.filename))
+				}).catch(error => {
+					console.error(`Failed to send Discord broadcast via webhook to discordChannel ${[discordChannel.id, '#'+discordChannel.name, discordChannel.guild.name]}:`, error.message);
+					// fallback to embed if webhook fails
+					regularBroadcast();
+				});
 			} else regularBroadcast();
 			// send as embed
 			function regularBroadcast() {
