@@ -51,12 +51,12 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 				if (data.startsWith("[Server]")) return; // ignore [Server] messages
 				if (data.startsWith("->")) return; // ignore direct messages because spam
 				let msg = data;
+				msg = msg.replace(/<@/g, "<\\@"); // escape mentions
+				msg = msg.replace(/(\*|_|\||~|`|\\)/g, '\\$1'); // escape formatting chars
 				//if (msg.startsWith("(A)")) msg = msg.replace("(A)", "**(A)**");
 				//if (msg.startsWith("(M)")) msg = msg.replace("(M)", "**(M)**");
 				//{ let x = msg.split(':'); x[0] = `**${x[0]}**`; msg = x.join(':'); } // bold prefix to distinguish from newline fakes
 				if (msg.includes(':')) msg = '**' + msg.replace(':', ':**'); // simpler version of above, to include the colon in bold
-				msg = msg.replace(/(\*|_|\||~|`|\\)/g, '\\$1'); // escape formatting chars
-				msg = msg.replace(/<@/g, "<\\@"); // escape mentions
 				if (owopWorld == "main") msg = require('./antiswear')(msg);
 				for (let discordChannel of discordChannels) {
 					let lastMessage = discordChannel.messages.last();
