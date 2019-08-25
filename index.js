@@ -7,7 +7,6 @@ const config = require("./config");
 
 var discordBot = new Discord.Client({disableEveryone:true});
 discordBot.login(config.discord_token);
-discordBot.on("error", console.error);
 var banlist;
 
 var bridges = {}; // owop websockets to discord channels
