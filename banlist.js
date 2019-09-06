@@ -2,7 +2,9 @@ module.exports = function(discordBot) {
     var banlist = [];
 
     function updateBanList() {
-        discordBot.guilds.get("350296414720491530").fetchBans().then(bans => {
+	var homeGuild = discordBot.guilds.get("350296414720491530");
+	if (!homeGuild) return console.error("Couldn't find OWOP discord!");
+        homeGuild.fetchBans().then(bans => {
             banlist = bans.keyArray();
         }).catch(e => console.error("Could not fetch bans: ", e.message));
     }

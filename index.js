@@ -23,6 +23,7 @@ discordBot.once("ready", function(){
 function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 	var discordChannels = configDiscordChannels.map(configDiscordChannel => {
 		var c = discordBot.channels.get(configDiscordChannel.id);
+		if (!c) return console.error(`Could not find discord channel ${configDiscordChannel.id} to bridge to owop world "${owopWorld}"`);
 		// attach webhook to channel object for webhook inter-discord-channel broadcast method
 		if (configDiscordChannel.webhook) c.webhook = new Discord.WebhookClient(configDiscordChannel.webhook.id, configDiscordChannel.webhook.token, {disableEveryone: true});
 		return c;
