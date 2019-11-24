@@ -59,6 +59,7 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 				if (msg.includes(':')) msg = '**' + msg.replace(':', ':**'); // simpler version of above, to include the colon in bold
 				if (owopWorld == "main") msg = require('./antiswear')(msg);
 				for (let discordChannel of discordChannels) {
+					if (discordChannel.guild.id != "350296414720491530" && data == "You are banned. Appeal on the OWOP discord server, (https://discord.io/owop)") return;
 					let lastMessage = discordChannel.messages.last();
 					if (lastMessage && lastMessage.originalMsg && lastMessage.originalMsg == msg && lastMessage.author.id == discordBot.user.id) {
 						// if this owop message is same as source of last message and last message was sent by this bot
