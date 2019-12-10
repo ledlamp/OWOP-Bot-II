@@ -86,6 +86,7 @@ module.exports = function (discordBot) {
     discordBot.on("message", async function (message) {
         if (!message.author.bot) {
             if (message.content.startsWith("b!")) {
+                if (message.guild.members.has("652830079763611668")) return;
                 var content = message.content.slice(2).split(" ");
                 let command = content[0].toLowerCase();
                 if (command in commands) {
