@@ -19,7 +19,7 @@ module.exports = function (discordBot) {
             }
         },
         "eval": {
-            whitelist: ["350303014944505866", "281134216115257344"], // admins, lamp
+            whitelist: ["350303014944505866", "330499035419115522"], // admins, lamp2
             description: "Runs a snippet of javascript code on the server",
             usage: "b!eval <javascipt>",
             use: function (args, message) {
