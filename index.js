@@ -50,6 +50,7 @@ function createOWOPbridge(owopWorld, configDiscordChannels, password) {
 				if (data == "Server: You are now a moderator. Do /help for a list of commands.") return; // ignore that
 				if (data.startsWith("[Server]")) return; // ignore [Server] messages
 				if (data.startsWith("->")) return; // ignore direct messages because spam
+				if (data == "Welcome to /flags<br>https://discord.io/owopflagworld") return;
 				let msg = data;
 				msg = msg.replace(/<@/g, "<\\@"); // escape mentions
 				msg = msg.replace(/(\*|_|\||~|`|\\)/g, '\\$1'); // escape formatting chars
